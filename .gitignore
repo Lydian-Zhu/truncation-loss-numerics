@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Working leftovers that are not part of the released record
+_archive_removed/
+_tpl_e11.tex
+*.tmp
+*.bak
+figures/
