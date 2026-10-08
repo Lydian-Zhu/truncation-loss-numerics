@@ -2,7 +2,7 @@
 
 Code and JSON output for the manuscript
 
-> **Mechanism of higher-order leakage into second-order dynamics under second-order
+> **Mechanism of higher-order leakage into second-order predictability dynamics under
 > moment truncation: order-by-order separation and the boundary of validity**
 > Jinlin Zhu, School of Physics, Hubei University, Wuhan, China
 > ORCID: [0009-0008-9157-3272](https://orcid.org/0009-0008-9157-3272)
