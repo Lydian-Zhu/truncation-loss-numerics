@@ -61,8 +61,11 @@ for N, col in ((7, "cRed"), (9, "cGreen"), (11, "cPurple")):
         r"\addplot[%s, line width=0.9pt, mark=*, mark size=1.6pt, "
         r"mark options={fill=%s}] coordinates {%s};" % (col, col, xy(y, nd=5)))
 ratio_lines = "\n".join(ratio_lines)
-rmax = max(c / b for N in (7, 9, 11) for c, b in zip(curves["N%d_R1.0" % N], base))
-rmin = min(c / b for N in (7, 9, 11) for c, b in zip(curves["N%d_R1.0" % N], base))
+# Panel (b)'s sentence is about the N = 11 curve specifically: its largest
+# overshoot over N = 5 (at small kcut/kstar) and its value as kcut/kstar -> 1.
+_r11 = [c / b for c, b in zip(curves["N11_R1.0"], base)]
+rmax = max(_r11)
+rmin = _r11[-1]
 
 # verify: the three R curves at the same N are pointwise identical
 same = True
@@ -88,9 +91,11 @@ airy = " ".join("(%d,%.4f)" % (n, (n / 2.0 - 1.0) + 1.8558 * (n / 2.0 - 1.0) ** 
 # divergence points: read from the N=5 case (R does not affect the curve shape)
 _ref = [r for r in D["cases"] if r["N"] == 5 and abs(r["R"] - 0.5) < 1e-12][0]
 div_pts = [(k, _ref["ratios"][k]["e2"]) for k in ("0.50", "0.80", "0.95")]
-div_tex = ", ".join("$%s\\to%s$" % (k.rstrip("0").rstrip(".") if k.endswith("0") else k,
-                                   ("%.3f" % v) if v < 0.1 else ("%.2f" % v))
-                    for k, v in div_pts)
+_div_v = ["$%s$" % (("%.3f" % v) if v < 0.1 else ("%.2f" % v)) for _k, v in div_pts]
+_div_k = [(k.rstrip("0").rstrip(".") if k.endswith("0") else k) for k, _v in div_pts]
+div_tex = "%s at $\\kcut/\\kstar=%s$" % (
+    ", ".join(_div_v[:-1]) + " and " + _div_v[-1],
+    ", ".join(_div_k[:-1]) + " and " + _div_k[-1])
 
 body = r"""% ID: fig_zeros
 % DEPENDS: th_window
@@ -145,36 +150,30 @@ body = r"""% ID: fig_zeros
 \centering
 \begin{tikzpicture}
 \begin{axis}[pubaxis, width=\linewidth-40pt, height=48mm,
-             xlabel={$N$}, ylabel={$\kstar$ ($R=1$)},
-             legend style={font=\scriptsize, draw=none, fill=none,
-                           at={(0.03,0.97)}, anchor=north west}]
+             xlabel={$N$}, ylabel={$\kstar$ ($R=1$)}]
 \addplot[cBlue, line width=0.9pt, mark=*, mark size=1.8pt,
         mark options={fill=cBlue}] coordinates {<<KSTAR>>};
 \addplot[cRed, line width=0.9pt, densely dashed, mark=triangle*,
         mark size=1.7pt, mark options={fill=cRed}] coordinates {<<AIRY>>};
-\legend{exact $j_{N/2-1,1}$, Airy asymptotics}
 \end{axis}
 \end{tikzpicture}
-\caption{zero moves outward with $N$}\label{fig:zeros:c}
+\caption{zeros move outward with $N$}\label{fig:zeros:c}
 \end{subfigure}
 
 \caption{Analytic verification of the zero criterion (Hopf exact solution of the Orszag--McLaughlin model~\cite{hopf1952,marston2005}).
 (a) Maximum error of the $n=2$ truncation versus $\kcut/\kstar$, where $\kstar=j_{N/2-1,1}/R$ is the analytically known zero distance.
 All $12$ combinations of $N\in\{5,7,9,11\}$ and $R\in\{0.5,1,2\}$ are drawn:
 colour marks $N$ and marker shape marks $R$ (circle $R=1$, square $R=0.5$, triangle $R=2$),
-and at a fixed $N$ the three shapes coincide pointwise -- the error is a function of $\kcut/\kstar$ alone,
-and $R$ only rescales $\kstar$ without changing this ratio.
-Across all $12$ curves the median max/min ratio of the error at a fixed $\kcut/\kstar$ is $1.20$,
-i.e. the validity of the truncation is determined only by $\kcut/\kstar$, independently of $N$ and $R$.
-The error diverges as $\kcut/\kstar\to1$
-(<<DIV>>),
+At a fixed $N$ the three marker shapes coincide pointwise, so $R$ enters only through the plotted combination $\kcut/\kstar$;
+across $N$ the collapse is not exact, and the residual dependence is quantified in panel (b).
+The error diverges as $\kcut/\kstar\to1$, reaching
+<<DIV>>,
 which is the direct content of ``the truncation holds only for $\kcut<\kstar$''.
 (b) The residual $N$ dependence: the same error divided by the $N=5$ curve, so that a perfect collapse would be a flat line at $1$.
 The separation is monotone in $N$ and bounded -- the $N=11$ curve exceeds $N=5$ by <<RMAX>> at small $\kcut/\kstar$,
-falling to <<RMIN>> as $\kcut/\kstar\to1$ -- so $N$ is the only remaining degree of freedom, and a weak one;
-the $R$ dependence is absent to the same precision in all three curves.
-(c) $\kstar$ moves outward with $N$, in agreement with the Airy asymptotics $j_{\nu,1}\sim\nu+1.8558\nu^{1/3}$.
-The model tends to Gaussian as $N\to\infty$, so the decrease of non-Gaussianity, the outward movement of the zero and the improvement of the second-order truncation
+falling to <<RMIN>> as $\kcut/\kstar\to1$ -- so $N$ is the only remaining degree of freedom, and a weak one.
+(c) $\kstar$ moves outward with $N$ (solid: exact $j_{N/2-1,1}$; dashed: Airy asymptotics
+$j_{\nu,1}\sim\nu+1.8558\nu^{1/3}$). The model tends to Gaussian as $N\to\infty$, so the decrease of non-Gaussianity, the outward movement of the zero and the improvement of the second-order truncation
 are the same thing.}
 \label{fig:zeros}
 \end{figure}
@@ -198,6 +197,6 @@ with open(out, "w", encoding="utf-8") as fh:
 print("wrote:", out)
 print("curves drawn:", len(plots.split("\n")), "(12 = 4 N x 3 R)")
 print("R coincidence check: passed")
-print("ratio range (N=11..7 over N=5): %.4f .. %.4f" % (rmin, rmax))
+print("N=11 / N=5 ratio: %.4f (kcut/kstar -> 1) .. %.4f (small kcut/kstar)" % (rmin, rmax))
 print("error as kcut/kstar -> 1:", [(r, round(v, 4)) for r, v in div_pts])
 print("kstar (R=1):", [(n, round(k, 3)) for n, k in sorted(zip(ns, ks))])
