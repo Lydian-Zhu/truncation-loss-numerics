@@ -159,12 +159,27 @@ def calibrate_T(sy, mu0, nodes, weights, target, dt=0.05):
 
 
 def fit_power(eps, y):
+    """Log--log least-squares slope and its standard error.
+
+    The slope p is the linear regression of ln|y| on ln(eps). The standard
+    error is se = sqrt(RSS / (n - 2) / Sxx), the residual sum of squares per
+    degree of freedom divided by the sample sum of squares of ln(eps). It is
+    not estimable for n <= 2 and is then returned as nan.
+    """
     e = np.log(np.array(eps, dtype=float))
     v = np.log(np.abs(np.array(y, dtype=float)))
     ok = np.isfinite(v)
-    A = np.vstack([e[ok], np.ones(ok.sum())]).T
-    p, _ = np.linalg.lstsq(A, v[ok], rcond=None)[0]
-    return float(p)
+    e, v = e[ok], v[ok]
+    n = e.size
+    A = np.vstack([e, np.ones(n)]).T
+    coef, _res, _rank, _sv = np.linalg.lstsq(A, v, rcond=None)
+    p, c0 = float(coef[0]), float(coef[1])
+    if n <= 2:
+        return p, float("nan")
+    rss = float(np.sum((v - (p * e + c0)) ** 2))
+    sxx = float(np.sum((e - e.mean()) ** 2))
+    se = float(np.sqrt(rss / (n - 2) / sxx)) if sxx > 0 else float("nan")
+    return p, se
 
 
 # ------------------------------------------------------------------ Main
@@ -208,16 +223,20 @@ def main():
                 cases.append(dict(eps=eps,
                                   kappa=[float(v) for v in k0],
                                   dkappa=[float(v) for v in dk]))
-            pw = {}
+            pw, pw_se = {}, {}
             for m in (2, 3, 4, 5):
-                pw["kappa%d" % m] = fit_power(EPS_LIST, [c["kappa"][m - 1] for c in cases])
-                pw["dkappa%d" % m] = fit_power(EPS_LIST, [c["dkappa"][m - 1] for c in cases])
-            sy_out["families"][fname] = dict(gamma=g, kurt4=k4, cases=cases, powers=pw)
+                pw["kappa%d" % m], pw_se["kappa%d" % m] = fit_power(
+                    EPS_LIST, [c["kappa"][m - 1] for c in cases])
+                pw["dkappa%d" % m], pw_se["dkappa%d" % m] = fit_power(
+                    EPS_LIST, [c["dkappa"][m - 1] for c in cases])
+            sy_out["families"][fname] = dict(gamma=g, kurt4=k4, cases=cases,
+                                             powers=pw, powers_se=pw_se)
             print("  --- %s ---" % fname)
             for m in (2, 3, 4, 5):
                 tag = "even" if m % 2 == 0 else "odd"
-                print("    %s  kappa_%d ~ eps^%+7.4f  |  dot kappa_%d ~ eps^%+7.4f"
-                      % (tag, m, pw["kappa%d" % m], m, pw["dkappa%d" % m]))
+                print("    %s  kappa_%d ~ eps^%+7.4f+-%.4f  |  dot kappa_%d ~ eps^%+7.4f+-%.4f"
+                    % (tag, m, pw["kappa%d" % m], pw_se["kappa%d" % m],
+                        m, pw["dkappa%d" % m], pw_se["dkappa%d" % m]))
             p3, p4 = pw["dkappa3"], pw["dkappa4"]
             print("    >>> odd branch dot kappa_3 ~ eps^%.2f , even branch dot kappa_4 ~ eps^%.2f "
                   "-> odd branch leads by %+.2f powers" % (p3, p4, p4 - p3))
