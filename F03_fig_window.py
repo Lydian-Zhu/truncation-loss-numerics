@@ -121,8 +121,6 @@ body = r"""% ID: fig_epsT
                            legend columns=3}]
 <<SECTIONS>>
 \addplot[pubref, forget plot] coordinates {(0.016,1) (0.36,1)};
-\node[font=\scriptsize, text=cGray, anchor=south east]
-  at (axis cs:0.30,1.35) {$Q=1$};
 \legend{<<LEGEND>>}
 \end{axis}
 \end{tikzpicture}
@@ -145,8 +143,6 @@ body = r"""% ID: fig_epsT
 \addplot[pubref, forget plot] coordinates {(0,1) (1.68,1)};
 \addplot[cGray, line width=0.9pt, densely dashed, forget plot]
   coordinates {(<<TB>>,0.5) (<<TB>>,2e5)};
-\node[font=\scriptsize, text=cGray, anchor=south east]
-  at (axis cs:1.44,1.3) {$Q=1$ at $T\approx<<TB>>$};
 \legend{$\epsilon=0.02$}
 \end{axis}
 \end{tikzpicture}
@@ -178,8 +174,8 @@ body = r"""% ID: fig_epsT
 \addplot[pubref, forget plot] coordinates {(0,<<THR>>) (<<TMAX>>,<<THR>>)};
 \node[font=\scriptsize, text=cGreen!45!black, anchor=north east]
   at (axis cs:1.60,<<YMAX>>) {green = effective window $T\le0.5$};
-\node[font=\scriptsize, text=cGray, anchor=south east]
-  at (axis cs:1.60,<<BHI>>) {threshold $<<THR>>$};
+\node[font=\scriptsize, text=cGray, anchor=south west]
+  at (axis cs:0.05,<<BHI>>) {threshold $<<THR>>$};
 \legend{$\lvert p_3-3\rvert+\lvert p_4-5\rvert$}
 \end{axis}
 \end{tikzpicture}

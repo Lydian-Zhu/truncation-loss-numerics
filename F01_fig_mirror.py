@@ -71,7 +71,7 @@ PsB = _ma([b["P_sup"] for b in B], MA_W)
 pairsA = [(a["t"], v) for a, v in zip(A, PsA)]
 pairsB = [(b["t"], v) for b, v in zip(B, PsB)]
 
-AX = (r"pubaxis, width=\linewidth-34pt, height=45mm")
+AX = (r"pubaxis, width=\linewidth-34pt, height=41mm")
 
 # panel (a): two coincident main lines plus a note
 body = r"""% ID: fig_mirror
@@ -87,7 +87,8 @@ body = r"""% ID: fig_mirror
 \begin{axis}[<<AX>>, xlabel={$t$}, ylabel={$|\varphi_t(\bk)|$}, ymin=0.06, ymax=1.06,
              ytick={0.2,0.4,0.6,0.8,1.0},
              legend style={font=\scriptsize, draw=none, fill=none,
-                           at={(0.03,0.03)}, anchor=south west}]
+                           at={(0.5,1.06)}, anchor=south},
+             legend columns=2}]
 \addplot[publines, cBlue] coordinates {<<Aphi>>};
 \addplot[publines, cRed, densely dashed] coordinates {<<Bphi>>};
 \legend{$\kappa_3=+0.5$,\ \ $\kappa_3=-0.5$}
@@ -106,10 +107,11 @@ body = r"""% ID: fig_mirror
              ylabel={$|\det\Sigma_{+}/\det\Sigma_{-}-1|$},
              ymin=1e-16, ymax=1e0,
              legend style={font=\scriptsize, draw=none, fill=none,
-                           at={(0.03,0.97)}, anchor=north west}]
+                           at={(0.5,1.06)}, anchor=south},
+             legend columns=2}]
 \addplot[cGray, densely dashed] coordinates {(0.000,1e-15) (3.000,1e-15)};
 \addplot[publines, cBlue] coordinates {<<RELB>>};
-\legend{machine zero, $|\det\Sigma_{+}/\det\Sigma_{-}-1|$}
+\legend{machine zero, relative difference}
 \end{axis}
 \end{tikzpicture}
 \caption{}\label{fig:mirror:b}
@@ -122,7 +124,8 @@ body = r"""% ID: fig_mirror
 \begin{axis}[<<AX>>, xlabel={$t$}, ylabel={$P(d_x>\Delta)$},
              ymin=0, ymax=0.60, ytick={0,0.2,0.4,0.6},
              legend style={font=\scriptsize, draw=none, fill=none,
-                           at={(0.03,0.97)}, anchor=north west}]
+                           at={(0.5,1.06)}, anchor=south},
+             legend columns=2}]
 \addplot[publines, cBlue] coordinates {<<AP>>};
 \addplot[publines, cRed, densely dashed] coordinates {<<BP>>};
 \addplot[pubref, forget plot] coordinates {(0.4,0.375) (3.0,0.375)};
@@ -141,7 +144,8 @@ body = r"""% ID: fig_mirror
 \begin{axis}[<<AX>>, xlabel={$\kappa_3$}, ylabel={$\Delta P(d_x>\Delta)$},
              xmin=0, xmax=1.05, ymin=0, ymax=0.16,
              legend style={font=\scriptsize, draw=none, fill=none,
-                           at={(0.03,0.97)}, anchor=north west}]
+                           at={(0.5,1.06)}, anchor=south},
+             legend columns=2}]
 \addplot[pubref] coordinates {(0,0.0000) (1,0.1389)};
 \addplot[publines, cBlue, mark=*, mark size=1.8pt, mark options={fill=cBlue}]
   coordinates {<<scal>>};

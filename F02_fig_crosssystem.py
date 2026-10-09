@@ -68,9 +68,8 @@ def main():
     for y0, p, lab in ((1.10e-6, 4.0, "4"), (2.00e-9, 6.0, "6")):
         y1 = y0 * (0.070 / 0.020) ** p
         a_ref.append(
-            "\\draw[pubref] (axis cs:0.020,%s) -- (axis cs:0.070,%s)\n"
-            "  node[midway, sloped, below, font=\\scriptsize, text=cGray, "
-            "inner sep=1pt] {slope $%s$};" % (fmt(y0), fmt(y1), lab))
+            "\\draw[pubref, %s] (axis cs:0.020,%s) -- (axis cs:0.070,%s);"
+            % ("densely dashed" if p == 4.0 else "densely dotted", fmt(y0), fmt(y1)))
 
     pow_odd = [d["systems"][s]["families"]["gauss"]["powers"]["dkappa3"] for s in ORDER]
     pow_even = [d["systems"][s]["families"]["gauss"]["powers"]["dkappa4"] for s in ORDER]
@@ -119,7 +118,7 @@ def main():
 \begin{axis}[pubaxis, width=\linewidth-34pt, height=50mm, xmode=log, ymode=log,
              xlabel={$\epsilon$}, ylabel={normalized $|\dot\kappa_m|$},
              legend style={font=\scriptsize, draw=none, fill=none,
-                           at={(0.03,0.97)}, anchor=north west},
+                           at={(0.5,1.06)}, anchor=south},
              legend columns=2]
 @@A_REF@@
 @@A_LINES@@
@@ -136,7 +135,7 @@ def main():
              ylabel={even-branch exponent $\mathrm{p}(\dot\kappa_4)$},
              xmin=@@LO@@, xmax=@@HI@@, ymin=@@LO@@, ymax=@@HI@@,
              legend style={font=\scriptsize, draw=none, fill=none,
-                           at={(0.03,0.97)}, anchor=north west},
+                           at={(0.5,1.06)}, anchor=south},
              legend columns=1]
 \addplot[pubref] coordinates {(@@LO@@,@@LO@@) (@@HI@@,@@HI@@)};
 \node[anchor=north east, font=\scriptsize, cGray]
@@ -154,7 +153,7 @@ each system's measurement time $T$ is fixed by the same criterion, i.e. so that 
 (a) The gauss family (third and fourth initial values both zero, non-Gaussianity generated entirely by the dynamics):
 the odd branch $\dot\kappa_3$ is solid and the even branch $\dot\kappa_4$ dashed;
 color and marker distinguish systems ($\bullet$ L63, $\blacksquare$ R\"ossler, $\blacktriangle$ L96);
-each curve is normalized at $\epsilon=0.4$, and the short gray dashed segments mark the reference slopes $4$ and $6$,
+each curve is normalized at $\epsilon=0.4$, and the short gray dashed and dotted segments mark the reference slopes $4$ and $6$,
 the mean measured exponents of the two branches in this family (@@SLOPES@@).
 The two groups of slopes are clearly separated.
 (b) \emph{Discriminant plot}: the

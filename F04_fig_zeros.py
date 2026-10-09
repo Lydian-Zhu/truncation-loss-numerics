@@ -113,7 +113,7 @@ body = r"""% ID: fig_zeros
              legend style={font=\scriptsize, draw=none, fill=none,
                            cells={anchor=west}, column sep=3pt,
                            at={(0.5,1.07)}, anchor=south,
-                           legend columns=4},
+                           legend columns=2},
              every axis plot/.append style={publines}]
 <<ALL>>
 \addplot[pubref, forget plot] coordinates {(1.0,5e-5) (1.0,1e1)};
@@ -133,7 +133,7 @@ body = r"""% ID: fig_zeros
              ylabel={error ratio to $N=5$},
              legend style={font=\scriptsize, draw=none, fill=none,
                            cells={anchor=west}, column sep=3pt,
-                           at={(0.03,0.97)}, anchor=north west},
+                           at={(0.5,1.06)}, anchor=south},
              legend columns=1]
 \addplot[pubref, forget plot] coordinates {(0.05,1) (1.06,1)};
 \node[font=\scriptsize, text=cGray, anchor=south west]
