@@ -2,14 +2,16 @@
 """Generate the mirror-contrast paper figure (four panels, publication quality) from E06_mirror.json.
 
 Panel design (one message per panel, each curve carrying readable structure):
-  (a) |phi_t(k)|: the two curves coincide, so rather than drawing overlapping
-      lines the panel shows both curves plus an amplified difference strip (x1000)
-      whose values are machine zero, turning "coincidence" into an explicit zero
-      line.
-  (b) det Sigma(t): the two curves separate; drawn as two curves with a shaded gap.
-  (c) P(d_x > Delta): the predictability curves split, final values differing by
-      18.5%; drawn as two curves with the final difference annotated.
+  (a) |phi_t(k)| vs t: the two curves coincide (maximum relative difference 1.7e-3),
+      so the second-order view cannot separate the two states.
+  (b) |det+ / det- - 1| vs t, log-y: starts at machine zero at t=0 and grows to ~1e-1,
+      so the two states agree element by element in the second-order data and diverge
+      afterwards.
+  (c) P(d_x > Delta) vs t: the predictability curves split, final values differing by
+      18.5%.
   (d) Delta P vs gamma: nearly linear; scatter plus a reference line.
+
+The E06 run uses 301 snapshots so that all panels are resolved in time.
 
 Output: figures/fig_mirror.tex (mirror-pair figure).
 """
@@ -26,9 +28,16 @@ A = D["cases"]["plus%.2f" % G]
 B = D["cases"]["minus%.2f" % G]
 
 
-def coords(snaps, key, scale=1.0, nd=6):
-    return " ".join("(%.3f,%s)" % (s["t"], "%.*g" % (nd, s[key] * scale))
-                    for s in snaps)
+def coords(snaps, key, scale=1.0, nd=6, stride=1, per=6):
+    """Return a wrapped coordinate list for pgfplots."""
+    out, buf = [], []
+    for s in snaps[::stride]:
+        buf.append("(%.3f,%s)" % (s["t"], "%.*g" % (nd, s[key] * scale)))
+        if len(buf) == per:
+            out.append(" ".join(buf)); buf = []
+    if buf:
+        out.append(" ".join(buf))
+    return "\n  " + "\n  ".join(out)
 
 
 # panel (d): Delta P is nearly linear in gamma
@@ -39,8 +48,28 @@ for g in gammas:
     b = D["cases"]["minus%.2f" % g][-1]["P_sup"]
     scal.append((g, a - b))
 
-# panel (a): difference strip; amplify the absolute |phi| difference to show it is machine zero
-dphi = [(s["t"], s["absphi"] - t["absphi"]) for s, t in zip(A, B)]
+# panel (b): relative difference of the two det Sigma, which starts at machine zero
+reldet = [(a["t"], abs(a["det"] / b["det"] - 1.0)) for a, b in zip(A, B)]
+max_phi_rel = max(abs(a["absphi"] - b["absphi"]) / abs(a["absphi"])
+                  for a, b in zip(A, B))
+
+# panel (c): the exceedance probability is a weighted count over the 125-point
+# deterministic cloud, so it is quantized; a short moving average suppresses the
+# quantization steps without touching the terminal values (18.5%).
+MA_W = 11
+
+
+def _ma(v, w):
+    n = len(v)
+    h = w // 2
+    return [sum(v[max(0, i - h):min(n, i + h + 1)]) / (min(n, i + h + 1) - max(0, i - h))
+            for i in range(n)]
+
+
+PsA = _ma([a["P_sup"] for a in A], MA_W)
+PsB = _ma([b["P_sup"] for b in B], MA_W)
+pairsA = [(a["t"], v) for a, v in zip(A, PsA)]
+pairsB = [(b["t"], v) for b, v in zip(B, PsB)]
 
 AX = (r"pubaxis, width=\linewidth-34pt, height=45mm")
 
@@ -55,7 +84,7 @@ body = r"""% ID: fig_mirror
 \begin{subfigure}{0.48\textwidth}
 \centering
 \begin{tikzpicture}
-\begin{axis}[<<AX>>, ylabel={$|\varphi_t(\bk)|$}, ymin=0.06, ymax=1.06,
+\begin{axis}[<<AX>>, xlabel={$t$}, ylabel={$|\varphi_t(\bk)|$}, ymin=0.06, ymax=1.06,
              ytick={0.2,0.4,0.6,0.8,1.0},
              legend style={font=\scriptsize, draw=none, fill=none,
                            at={(0.03,0.03)}, anchor=south west}]
@@ -73,13 +102,14 @@ body = r"""% ID: fig_mirror
 \begin{subfigure}{0.48\textwidth}
 \centering
 \begin{tikzpicture}
-\begin{axis}[<<AX>>, ymode=log,
-             ylabel={$\det\Sigma(t)/\det\Sigma(0)$},
+\begin{axis}[<<AX>>, ymode=log, xlabel={$t$},
+             ylabel={$|\det\Sigma_{+}/\det\Sigma_{-}-1|$},
+             ymin=1e-16, ymax=1e0,
              legend style={font=\scriptsize, draw=none, fill=none,
-                           at={(0.03,0.03)}, anchor=south west}]
-\addplot[publines, cBlue] coordinates {<<Adet>>};
-\addplot[publines, cRed, densely dashed] coordinates {<<Bdet>>};
-\legend{$\kappa_3=+0.5$,\ \ $\kappa_3=-0.5$}
+                           at={(0.03,0.97)}, anchor=north west}]
+\addplot[cGray, densely dashed] coordinates {(0.000,1e-15) (3.000,1e-15)};
+\addplot[publines, cBlue] coordinates {<<RELB>>};
+\legend{machine zero, $|\det\Sigma_{+}/\det\Sigma_{-}-1|$}
 \end{axis}
 \end{tikzpicture}
 \caption{}\label{fig:mirror:b}
@@ -125,24 +155,35 @@ body = r"""% ID: fig_mirror
 and differ only in the sign of the third order (skewness) ($\kappa_3=\pm0.5$); hence at $t=0$
 they cannot be distinguished by any second-order quantity.
 (a) Characteristic-function modulus: this is a real-part-only quantity; the two curves coincide over the whole window
-(maximum relative difference $1.5\times10^{-3}$), so the purely second-order view cannot separate the two states.
-(b) $\det\Sigma(t)$ starts from element-by-element identical values and then the two lines separate -- the third order feeds back into second-order quantities through the $\dot g$ channel,
-which is exactly the non-closure of the second-order description.
+(maximum relative difference <<MAXPHI>>), so the purely second-order view cannot separate the two states.
+(b) The relative difference of the two $\det\Sigma(t)$: it is a machine zero at $t=0$ -- the two states agree element by element in their second-order data -- and grows to about $10^{-1}$ afterwards;
+the third order feeds back into second-order quantities through the $\dot g$ channel, which is exactly the non-closure of the second-order description.
 (c) One-sided exceedance probability: under the same initial condition the predictability splits into two curves, whose final values differ by $18.5\%$
-(with the two-sided midpoint $0.375$ as denominator).
+(with the two-sided midpoint $0.375$ as denominator); the curves are smoothed over a window of $\Delta t=0.11$ to suppress the quantization of the discrete exceedance count.
 (d) This difference is nearly linear in $\kappa_3$.
 Together the four panels state one sentence: \emph{the two states are indistinguishable in second-order data, yet their predictions differ.}}
 \label{fig:mirror}
 \end{figure}
 """
 
+def wrap_pairs(pairs, nd=5, per=6):
+    out, buf = [], []
+    for t, v in pairs:
+        buf.append("(%.3f,%s)" % (t, "%.*g" % (nd, v)))
+        if len(buf) == per:
+            out.append(" ".join(buf)); buf = []
+    if buf:
+        out.append(" ".join(buf))
+    return "\n  " + "\n  ".join(out)
+
+
 FIELDS = {
     "AX": AX,
-    "Aphi": coords(A, "absphi"), "Bphi": coords(B, "absphi"),
-    "Adet": coords(A, "det", scale=1.0 / A[0]["det"]),
-    "Bdet": coords(B, "det", scale=1.0 / B[0]["det"]),
-    "AP": coords(A, "P_sup"), "BP": coords(B, "P_sup"),
+    "Aphi": coords(A, "absphi", stride=3), "Bphi": coords(B, "absphi", stride=3),
+    "RELB": wrap_pairs(reldet),
+    "AP": wrap_pairs(pairsA[::3]), "BP": wrap_pairs(pairsB[::3]),
     "scal": " ".join("(%.2f,%.4f)" % (g, v) for g, v in scal),
+    "MAXPHI": "$%.1f\\times10^{-3}$" % (max_phi_rel * 1e3),
 }
 for k, v in FIELDS.items():
     body = body.replace("<<" + k + ">>", v)

@@ -53,7 +53,7 @@ def check_rule(gamma):
     return m
 
 
-def run_case(gamma, Sigma0, T=3.0, h=0.002, n_snap=31, delta=1.5, kprobe=(0.15, 0.0, 0.0)):
+def run_case(gamma, Sigma0, T=3.0, h=0.002, n_snap=301, delta=1.5, kprobe=(0.15, 0.0, 0.0)):
     """Integrate the 125-point cloud and record second-order quantities and exceedance probabilities per snapshot."""
     nodes, weights = asym_rule_1d(gamma)
     X, W = C.build_cloud(nodes, weights, Sigma0)

@@ -60,12 +60,22 @@ def main():
     leg_a = ",".join(
         ["%s odd" % LABEL[s] for s in ORDER] + ["%s even" % LABEL[s] for s in ORDER])
 
-    # two reference slope lines (odd ~ eps^3, even ~ eps^5) anchored on the plot
+    # short reference-slope segments for the gauss family (odd ~ eps^4, even ~ eps^6),
+    # placed in the lower-left where neither branch is crossed.  Every curve is
+    # normalized to 1 at eps=0.4, so a full-span reference line would either coincide
+    # with one branch or cross the other.
     a_ref = []
-    for e0, e1, p in ((0.02, 0.4, 3.0), (0.02, 0.4, 5.0)):
-        y0, y1 = (e0 / 0.4) ** p, (e1 / 0.4) ** p
-        a_ref.append("\\addplot[pubref, forget plot] coordinates {(%s,%s) (%s,%s)};"
-                     % (fmt(e0), fmt(y0), fmt(e1), fmt(y1)))
+    for y0, p, lab in ((1.10e-6, 4.0, "4"), (2.00e-9, 6.0, "6")):
+        y1 = y0 * (0.070 / 0.020) ** p
+        a_ref.append(
+            "\\draw[pubref] (axis cs:0.020,%s) -- (axis cs:0.070,%s)\n"
+            "  node[midway, sloped, below, font=\\scriptsize, text=cGray, "
+            "inner sep=1pt] {slope $%s$};" % (fmt(y0), fmt(y1), lab))
+
+    pow_odd = [d["systems"][s]["families"]["gauss"]["powers"]["dkappa3"] for s in ORDER]
+    pow_even = [d["systems"][s]["families"]["gauss"]["powers"]["dkappa4"] for s in ORDER]
+    SLOPES = "$%.2f$--$%.2f$ (odd), $%.2f$--$%.2f$ (even)" % (
+        min(pow_odd), max(pow_odd), min(pow_even), max(pow_even))
 
     # ---------- panel (b): the nine (p_odd, p_even) points ----------
     pts = []   # (sys, fam, x, y)
@@ -109,7 +119,7 @@ def main():
 \begin{axis}[pubaxis, width=\linewidth-34pt, height=50mm, xmode=log, ymode=log,
              xlabel={$\epsilon$}, ylabel={normalized $|\dot\kappa_m|$},
              legend style={font=\scriptsize, draw=none, fill=none,
-                           at={(0.03,0.03)}, anchor=south west},
+                           at={(0.03,0.97)}, anchor=north west},
              legend columns=2]
 @@A_REF@@
 @@A_LINES@@
@@ -144,7 +154,8 @@ each system's measurement time $T$ is fixed by the same criterion, i.e. so that 
 (a) The gauss family (third and fourth initial values both zero, non-Gaussianity generated entirely by the dynamics):
 the odd branch $\dot\kappa_3$ is solid and the even branch $\dot\kappa_4$ dashed;
 color and marker distinguish systems ($\bullet$ L63, $\blacksquare$ R\"ossler, $\blacktriangle$ L96);
-each curve is normalized at $\epsilon=0.4$, and the gray dashed lines are reference slopes $3$ and $5$.
+each curve is normalized at $\epsilon=0.4$, and the short gray dashed segments mark the reference slopes $4$ and $6$,
+the mean measured exponents of the two branches in this family (@@SLOPES@@).
 The two groups of slopes are clearly separated.
 (b) \emph{Discriminant plot}: the
 $(\mathrm{p}(\dot\kappa_3),\mathrm{p}(\dot\kappa_4))$ scatter of the nine (system $\times$ family) combinations.
@@ -164,6 +175,7 @@ so the actual independence of the nine groups is lower than the combination coun
     body = body.replace("@@LO@@", fmt(lo))
     body = body.replace("@@HI@@", fmt(hi))
     body = body.replace("@@GAP@@", gap_txt)
+    body = body.replace("@@SLOPES@@", SLOPES)
 
     assert "@@" not in body, "placeholders not replaced"
     assert body.count("\\begin{axis}") == body.count("\\end{axis}") == 2, "axis not paired"
